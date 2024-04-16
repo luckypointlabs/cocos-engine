@@ -1,0 +1,3 @@
+[submodule "native/external"]
+	path = native/external
+	url = git@github.com:cocos/cocos-engine-external.git
