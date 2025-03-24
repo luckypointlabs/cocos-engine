@@ -293,6 +293,7 @@ class ScreenAdapter extends EventTarget {
 
     constructor () {
         super();
+
         // TODO: need to access frame from 'pal/launcher' module
         this._gameFrame = document.getElementById('GameDiv') as HTMLDivElement;
         this._gameContainer = document.getElementById('Cocos3dGameContainer') as HTMLDivElement;
@@ -383,10 +384,11 @@ class ScreenAdapter extends EventTarget {
         });
 
         window.addEventListener('resize', (): void => {
-            // if (!this.handleResizeEvent) {
-            //     return;
-            // }
-            this._resizeFrame();
+//             if (!this.handleResizeEvent) {
+//                 return;
+//             }
+            //TBIRD2503 call this so we also get updateFrameState, recalculate the window size every time
+        	   this._updateFrame();
         });
 
         const notifyOrientationChange = (orientation): void => {
@@ -508,6 +510,14 @@ class ScreenAdapter extends EventTarget {
         return clonedSize;
     }
 
+     //TBIRD2503: some agents dont handle document.body.scrollHeight correctly
+    private _ignoreScrollHeight(): boolean {
+      const userAgent = navigator.userAgent;
+      if (/Chrome\/[.\d]+ Mobile/.test(userAgent) && /Android/.test(userAgent)) return true; //chrome mobile simulator
+      if (userAgent.match(/firefox|fxios/i)) return true;   //firefox
+      return false;
+    }
+
     /**
      * The frame size may be from screen size or an external editor options by setting screen.windowSize.
      * @param sizeInCssPixels you need to specify this size when the windowType is SubFrame.
@@ -532,9 +542,10 @@ class ScreenAdapter extends EventTarget {
             let winHeight = window.innerHeight;
             //On certain android devices, window.innerHeight may not account for the height of the virtual keyboard, so dynamic calculation is necessary.
             const inputHeight = document.body.scrollHeight - winHeight;
-            if (systemInfo.os === OS.ANDROID && winHeight < inputHeight) {
+            if (systemInfo.os === OS.ANDROID && winHeight < inputHeight && !this._ignoreScrollHeight()) {               
                 winHeight += inputHeight;
             }
+        
             if (this.isFrameRotated) {
                 this._gameFrame.style['-webkit-transform'] = 'rotate(90deg)';
                 this._gameFrame.style.transform = 'rotate(90deg)';
@@ -554,8 +565,9 @@ class ScreenAdapter extends EventTarget {
                 this._gameFrame.style.height = `${winHeight}px`;
             }
         }
-
+        //TBIRD2503: add this so we update the container after potential resize
         this._updateContainer();
+
     }
 
     private _getFullscreenTarget (): HTMLElement | undefined {
