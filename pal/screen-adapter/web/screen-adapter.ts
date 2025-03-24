@@ -508,6 +508,15 @@ class ScreenAdapter extends EventTarget {
         return clonedSize;
     }
 
+    
+    //TBIRD2503: some agents dont handle document.body.scrollHeight correctly
+    private _ignoreScrollHeight(): boolean {
+      const userAgent = navigator.userAgent;
+      if (/Chrome\/[.\d]+ Mobile/.test(userAgent) && /Android/.test(userAgent)) return true; //chrome mobile simulator
+      if (userAgent.match(/firefox|fxios/i)) return true;   //firefox
+      return false;
+    }
+
     /**
      * The frame size may be from screen size or an external editor options by setting screen.windowSize.
      * @param sizeInCssPixels you need to specify this size when the windowType is SubFrame.
@@ -532,7 +541,9 @@ class ScreenAdapter extends EventTarget {
             let winHeight = window.innerHeight;
             //On certain android devices, window.innerHeight may not account for the height of the virtual keyboard, so dynamic calculation is necessary.
             const inputHeight = document.body.scrollHeight - winHeight;
-            if (systemInfo.os === OS.ANDROID && winHeight < inputHeight) {
+            //TBIRD2503: Don't do this if we're in the chrome simulator. it elongates things.
+            //  But it seems to work on most devices?
+            if (systemInfo.os === OS.ANDROID && winHeight < inputHeight && !this._ignoreScrollHeight()) {
                 winHeight += inputHeight;
             }
             if (this.isFrameRotated) {
@@ -554,7 +565,6 @@ class ScreenAdapter extends EventTarget {
                 this._gameFrame.style.height = `${winHeight}px`;
             }
         }
-
         this._updateContainer();
     }
 
