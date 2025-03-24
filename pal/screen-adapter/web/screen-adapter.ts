@@ -370,6 +370,11 @@ class ScreenAdapter extends EventTarget {
         });
     }
 
+    private _updateFrame (): void {
+        this._updateFrameState();
+        this._resizeFrame();
+    }
+
     private _registerEvent (): void {
         document.addEventListener(this._fn.fullscreenerror, (): void => {
             this._onFullscreenError?.();
@@ -379,7 +384,9 @@ class ScreenAdapter extends EventTarget {
             if (!this.handleResizeEvent) {
                 return;
             }
-            this._resizeFrame();
+            //TBIRD: fully calculate frame resize
+            //this._resizeFrame();
+             this._updateFrame();
         });
         if (typeof window.matchMedia === 'function') {
             const updateDPRChangeListener = (): void => {
@@ -400,8 +407,7 @@ class ScreenAdapter extends EventTarget {
                 if (!this.handleResizeEvent) {
                     return;
                 }
-                this._updateFrameState();
-                this._resizeFrame();
+                this._updateFrame();
                 this.emit('orientation-change', this.windowSize.width, this.windowSize.height);
                 this._orientationChangeTimeoutId = -1;
             }, EVENT_TIMEOUT);
